@@ -1,0 +1,36 @@
+#-*- mode: shell-script -*-
+#!/bin/bash
+
+while true
+do
+    CMUS_STATUS="$(cmus-remote -Q 2>/dev/null | grep status | cut -d ' ' -f 2)"
+    CMUS="CMUS Not Playing"
+    if [ "$CMUS_STATUS" ] && [ "$CMUS_STATUS" != "stopped" ]
+    then
+        case "$CMUS_STATUS" in
+            "playing") CMUS_ICON="▶" ;;
+            "paused")  CMUS_ICON="⏸" ;;
+            *) CMUS_ICON="■" ;;
+        esac
+
+        CMUS_ARTIST="$(cmus-remote -Q 2>/dev/null | grep 'tag artist' | cut -d ' ' -f 3-)"
+        CMUS_TITLE="$(cmus-remote -Q 2>/dev/null | grep 'tag title' | cut -d ' ' -f 3-)"
+        CMUS_POSITION="$(cmus-remote -Q 2>/dev/null | grep position | cut -d ' ' -f 2)"
+        CMUS_DURATION="$(cmus-remote -Q 2>/dev/null | grep duration | cut -d ' ' -f 2)"
+
+        CMUS="$CMUS_ICON $CMUS_ARTIST - $CMUS_TITLE [${CMUS_POSITION}/${CMUS_DURATION}]"
+    fi
+
+
+    SOUND=`awk -F"[][]" '/dB/ { print $6 }' <(amixer -c 1 sget Headphone) | head -n1`
+    VOLUME="{M}"
+    if [ "$SOUND" == "on" ]
+    then
+        VOLUME=`awk -F"[][]" '/dB/ { print $2 }' <(amixer -c 1 sget Headphone) | head -n1`
+    fi
+
+    TIME="$( date +"%a %b %d %I:%M %p" )"
+
+    xsetroot -name "$CMUS | $VOLUME | $TIME"
+    sleep 1s
+done
